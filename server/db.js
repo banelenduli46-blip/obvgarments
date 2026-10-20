@@ -1,7 +1,8 @@
 // Uses Node's built-in SQLite (Node 22.13+), so there is no native build step.
 import { DatabaseSync } from "node:sqlite";
 
-export const db = new DatabaseSync(process.env.DB_PATH || "orders.db");
+const dbPath = process.env.VERCEL ? "/tmp/orders.db" : (process.env.DB_PATH || "orders.db");
+export const db = new DatabaseSync(dbPath);
 db.exec("PRAGMA journal_mode = WAL;");
 db.exec("PRAGMA foreign_keys = ON;");
 db.exec(`
