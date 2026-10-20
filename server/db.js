@@ -1,10 +1,22 @@
 // Uses Node's built-in SQLite (Node 22.13+), so there is no native build step.
 import { DatabaseSync } from "node:sqlite";
 
-const dbPath = process.env.VERCEL ? "/tmp/orders.db" : (process.env.DB_PATH || "orders.db");
-export const db = new DatabaseSync(dbPath);
-db.exec("PRAGMA journal_mode = WAL;");
-db.exec("PRAGMA foreign_keys = ON;");
+let dbPath;
+let db;
+
+if (process.env.VERCEL) {
+  // Vercel = use memory DB (no file - instant, no crash)
+  console.log("Using :memory: DB for Vercel");
+  db = new DatabaseSync(":memory:");
+} else {
+  dbPath = process.env.DB_PATH || "orders.db";
+  db = new DatabaseSync(dbPath);
+  db.exec("PRAGMA journal_mode = WAL;");
+  db.exec("PRAGMA foreign_keys = ON;");
+}
+
+export const db;
+
 db.exec(`
   CREATE TABLE IF NOT EXISTS orders (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -35,8 +47,3 @@ db.exec(`
     expires_at TEXT NOT NULL
   );
 `);
-const memberColumns = db.prepare("PRAGMA table_info(members)").all();
-if (!memberColumns.some((column) => column.name === "google_sub"))
-  db.exec("ALTER TABLE members ADD COLUMN google_sub TEXT;");
-db.exec("CREATE UNIQUE INDEX IF NOT EXISTS members_google_sub_idx ON members(google_sub) WHERE google_sub IS NOT NULL;");
-db.exec("CREATE INDEX IF NOT EXISTS orders_email_status_idx ON orders(email, status);");
