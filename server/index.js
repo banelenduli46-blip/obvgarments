@@ -271,4 +271,7 @@ app.use((error, _req, res, _next) => {
 });
 
 const port = process.env.PORT || 4000;
-app.listen(port, () => console.log(`OBVGANG API on http://localhost:${port}`));
+if (!process.env.VERCEL) {
+  app.listen(port, () => console.log(OBVGANG API on http://localhost:${port}));
+}
+export default app;
